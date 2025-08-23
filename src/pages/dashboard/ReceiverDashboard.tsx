@@ -1,0 +1,208 @@
+import { useState } from "react";
+import { Package, Search, Filter, CheckCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useGetAllParcelsQuery, useUpdateParcelStatusMutation } from "@/store/api/parcelApi";
+import { useAppSelector } from "@/hooks/redux";
+import { useToast } from "@/hooks/use-toast";
+import ParcelTable from "@/components/dashboard/ParcelTable";
+import StatsCards from "@/components/dashboard/StatsCards";
+
+const ReceiverDashboard = () => {
+  const { toast } = useToast();
+  const { user } = useAppSelector((state) => state.auth);
+  const { data: allParcels = [], isLoading } = useGetAllParcelsQuery();
+  const [updateParcelStatus] = useUpdateParcelStatusMutation();
+  
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+
+  // Filter parcels for current receiver
+  const userParcels = allParcels.filter(parcel => 
+    parcel.receiverEmail === user?.email
+  );
+
+  const filteredParcels = userParcels.filter(parcel => {
+    const matchesSearch = 
+      parcel.trackingId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      parcel.senderName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      parcel.senderEmail.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesStatus = statusFilter === "all" || parcel.status === statusFilter;
+    
+    return matchesSearch && matchesStatus;
+  });
+
+  const stats = {
+    total: userParcels.length,
+    pending: userParcels.filter(p => p.status === 'pending').length,
+    inTransit: userParcels.filter(p => p.status === 'in_transit').length,
+    delivered: userParcels.filter(p => p.status === 'delivered').length,
+    cancelled: userParcels.filter(p => p.status === 'cancelled').length,
+  };
+
+  const handleConfirmDelivery = async (parcelId: string) => {
+    try {
+      await updateParcelStatus({
+        id: parcelId,
+        status: 'delivered',
+        note: 'Delivery confirmed by receiver'
+      }).unwrap();
+      
+      toast({
+        title: "Delivery Confirmed",
+        description: "The parcel has been marked as delivered successfully.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to confirm delivery. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <Package className="w-12 h-12 text-primary mx-auto mb-4 animate-pulse" />
+          <p className="text-muted-foreground">Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-muted/30">
+      {/* Header */}
+      <div className="bg-white shadow-card border-b">
+        <div className="container mx-auto px-6 py-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-primary">Receiver Dashboard</h1>
+              <p className="text-muted-foreground mt-1">
+                Welcome back, {user?.name}! Track and manage your incoming parcels.
+              </p>
+            </div>
+            <div className="text-right">
+              <div className="text-sm text-muted-foreground">
+                Pending Deliveries
+              </div>
+              <div className="text-2xl font-bold text-primary">
+                {stats.inTransit}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="container mx-auto px-6 py-8">
+        {/* Stats Cards */}
+        <StatsCards stats={stats} />
+
+        {/* Filters and Search */}
+        <Card className="card-gradient shadow-card mb-8">
+          <CardContent className="p-6">
+            <div className="flex flex-col md:flex-row gap-4">
+              <div className="flex-1">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
+                  <Input
+                    placeholder="Search by tracking ID, sender name, or email..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10 h-12"
+                  />
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="px-4 py-2 border border-input bg-background rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+                >
+                  <option value="all">All Status</option>
+                  <option value="pending">Pending</option>
+                  <option value="in_transit">In Transit</option>
+                  <option value="delivered">Delivered</option>
+                  <option value="cancelled">Cancelled</option>
+                </select>
+                <Button variant="outline" size="icon">
+                  <Filter className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Incoming Parcels */}
+        <Card className="card-gradient shadow-card mb-8">
+          <CardHeader>
+            <CardTitle className="text-xl text-primary flex items-center">
+              <CheckCircle className="w-6 h-6 mr-2" />
+              Parcels Awaiting Confirmation ({userParcels.filter(p => p.status === 'in_transit').length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {userParcels.filter(p => p.status === 'in_transit').length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <Package className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                <p>No parcels waiting for confirmation</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {userParcels.filter(p => p.status === 'in_transit').map((parcel) => (
+                  <div key={parcel._id} className="flex items-center justify-between p-4 bg-muted/30 rounded-lg">
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-4">
+                        <div>
+                          <p className="font-semibold text-foreground">
+                            Tracking ID: {parcel.trackingId}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            From: {parcel.senderName} ({parcel.senderEmail})
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            Type: {parcel.parcelType} • Weight: {parcel.weight}kg
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                    <Button 
+                      onClick={() => handleConfirmDelivery(parcel._id)}
+                      className="bg-success hover:bg-success/90 text-success-foreground"
+                    >
+                      <CheckCircle className="w-4 h-4 mr-2" />
+                      Confirm Delivery
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* All Parcels Table */}
+        <Card className="card-gradient shadow-card">
+          <CardHeader>
+            <CardTitle className="text-xl text-primary flex items-center">
+              <Package className="w-6 h-6 mr-2" />
+              All My Parcels ({filteredParcels.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ParcelTable 
+              parcels={filteredParcels} 
+              userRole="receiver"
+              showActions={false}
+            />
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+};
+
+export default ReceiverDashboard;
