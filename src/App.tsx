@@ -12,6 +12,7 @@ import ReceiverDashboard from "./pages/dashboard/ReceiverDashboard";
 import AdminDashboard from "./pages/dashboard/AdminDashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
 import NotFound from "./pages/NotFound";
+import Login from "./pages/auth/Login";
 
 const queryClient = new QueryClient();
 
@@ -26,6 +27,8 @@ const App = () => (
             {/* Public routes */}
             <Route path="/" element={<Layout />}>
               <Route index element={<Home />} />
+              <Route path="login" element={<Login/>} />
+              
             </Route>
             
             {/* Protected dashboard routes */}
