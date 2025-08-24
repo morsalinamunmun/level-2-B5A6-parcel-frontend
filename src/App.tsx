@@ -14,6 +14,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import NotFound from "./pages/NotFound";
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
+import About from "./pages/About";
 
 const queryClient = new QueryClient();
 
@@ -28,6 +29,7 @@ const App = () => (
             {/* Public routes */}
             <Route path="/" element={<Layout />}>
               <Route index element={<Home />} />
+              <Route path="about" element={<About/>} />
               <Route path="login" element={<Login/>} />
               <Route path="register" element={<Register/>} />
             </Route>
