@@ -13,6 +13,7 @@ import AdminDashboard from "./pages/dashboard/AdminDashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
 import NotFound from "./pages/NotFound";
 import Login from "./pages/auth/Login";
+import Register from "./pages/auth/Register";
 
 const queryClient = new QueryClient();
 
@@ -28,7 +29,7 @@ const App = () => (
             <Route path="/" element={<Layout />}>
               <Route index element={<Home />} />
               <Route path="login" element={<Login/>} />
-              
+              <Route path="register" element={<Register/>} />
             </Route>
             
             {/* Protected dashboard routes */}
