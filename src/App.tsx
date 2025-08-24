@@ -7,14 +7,9 @@ import { Provider } from "react-redux";
 import { store } from "./store";
 import Layout from "./components/Layout";
 import Home from "./pages/Home";
-import About from "./pages/About";
-import Contact from "./pages/Contact";
-import Login from "./pages/auth/Login";
-import Register from "./pages/auth/Register";
 import SenderDashboard from "./pages/dashboard/SenderDashboard";
 import ReceiverDashboard from "./pages/dashboard/ReceiverDashboard";
 import AdminDashboard from "./pages/dashboard/AdminDashboard";
-import TrackParcel from "./pages/TrackParcel";
 import ProtectedRoute from "./components/ProtectedRoute";
 import NotFound from "./pages/NotFound";
 
@@ -31,11 +26,6 @@ const App = () => (
             {/* Public routes */}
             <Route path="/" element={<Layout />}>
               <Route index element={<Home />} />
-              <Route path="about" element={<About />} />
-              <Route path="contact" element={<Contact />} />
-              <Route path="track" element={<TrackParcel />} />
-              <Route path="login" element={<Login />} />
-              <Route path="register" element={<Register />} />
             </Route>
             
             {/* Protected dashboard routes */}

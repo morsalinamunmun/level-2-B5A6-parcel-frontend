@@ -1,8 +1,8 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Package, LogOut, User, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useAppSelector, useAppDispatch } from "@/hooks/redux";
-import { logout } from "@/store/slices/authSlice";
+import {  useAppDispatch } from "@/hooks/redux";
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,18 +12,15 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 const Header = () => {
-  const { user, isAuthenticated } = useAppSelector((state) => state.auth);
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    dispatch(logout());
     navigate("/");
   };
 
   const getDashboardRoute = () => {
-    if (!user) return "/";
-    return `/dashboard/${user.role}`;
+  
   };
 
   return (
@@ -57,28 +54,7 @@ const Header = () => {
 
           {/* Auth Section */}
           <div className="flex items-center space-x-4">
-            {isAuthenticated && user ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="flex items-center space-x-2">
-                    <User className="w-4 h-4" />
-                    <span className="hidden sm:inline">{user.name}</span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuItem asChild>
-                    <Link to={getDashboardRoute()} className="w-full">
-                      Dashboard
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleLogout} className="text-destructive">
-                    <LogOut className="w-4 h-4 mr-2" />
-                    Logout
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            ) : (
+            
               <div className="flex items-center space-x-2">
                 <Button variant="ghost" asChild>
                   <Link to="/login">Login</Link>
@@ -87,7 +63,6 @@ const Header = () => {
                   <Link to="/register">Register</Link>
                 </Button>
               </div>
-            )}
           </div>
         </div>
       </div>
