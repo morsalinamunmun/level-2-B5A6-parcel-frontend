@@ -7,11 +7,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { useRegisterMutation } from "@/store/api/parcelApi";
 
 const Register = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
-  const [register, { isLoading }] = useState();
+  const [register, { isLoading }] = useRegisterMutation();
   
   const [formData, setFormData] = useState({
     name: "",

@@ -84,7 +84,7 @@ export const parcelApi = createApi({
     }),
     register: builder.mutation<AuthResponse, RegisterRequest>({
       query: (userData) => ({
-        url: '/auth/register',
+        url: '/user/register',
         method: 'POST',
         body: userData,
       }),
