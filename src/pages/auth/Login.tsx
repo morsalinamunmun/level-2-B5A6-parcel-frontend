@@ -6,12 +6,23 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAppDispatch } from "@/hooks/redux";
 import { useToast } from "@/hooks/use-toast";
+import { useLoginMutation } from "@/store/api/parcelApi";
+import { setCredentials } from "@/store/slices/authSlice";
+import {jwtDecode} from "jwt-decode";
+
+interface DecodedToken {
+  userId: string;
+  email: string;
+  role: string;
+  iat: number;
+  exp: number;
+}
 
 const Login = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const [login, { isLoading }] = useState();
+  const [login, { isLoading }] = useLoginMutation();
   
   const [formData, setFormData] = useState({
     email: "",
@@ -27,35 +38,44 @@ const Login = () => {
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    try {
-      const result = await login(formData).unwrap();
-      
-      if (result.success && result.data) {
-        dispatch(setCredentials({
-          user: result.data.user,
-          token: result.data.token
-        }));
-        
-        toast({
-          title: "Login Successful",
-          description: `Welcome back, ${result.data.user.name}!`,
-        });
-        
-        // Redirect based on user role
-        navigate(`/dashboard/${result.data.user.role}`);
-      }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (error: any) {
-      toast({
-        title: "Login Failed",
-        description: error.data?.message || "Invalid credentials. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
+  e.preventDefault();
 
+  try {
+    const result = await login(formData).unwrap();
+
+    if (result.success && result.data) {
+      // const decoded: DecodedToken = jwtDecode(result.data.accessToken);
+      const token = result.data.accessToken;
+const decoded: DecodedToken = jwtDecode(token);
+
+      dispatch(setCredentials({
+        user: {
+          _id: decoded.userId,
+          email: decoded.email,
+          role: decoded.role as 'sender' | 'receiver' | 'admin',
+          name: decoded.email.split("@")[0],
+          status: "active",
+          createdAt: ""
+        },
+         token,
+      }));
+
+      toast({
+        title: "Login Successful",
+        description: `Welcome back, ${decoded.email}!`,
+      });
+
+      navigate(`/dashboard/${decoded.role}`);
+    }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } catch (error: any) {
+    toast({
+      title: "Login Failed",
+      description: error.data?.message || "Invalid credentials. Please try again.",
+      variant: "destructive",
+    });
+  }
+};
   return (
     <div className="min-h-screen flex items-center justify-center py-12 px-4">
       <div className="w-full max-w-md">
