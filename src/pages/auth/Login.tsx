@@ -37,46 +37,130 @@ const Login = () => {
     });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
+//   const handleSubmit = async (e: React.FormEvent) => {
+//   e.preventDefault();
 
-  try {
-    const result = await login(formData).unwrap();
+//   try {
+//     const result = await login(formData).unwrap();
 
-    if (result.success && result.data) {
-      // const decoded: DecodedToken = jwtDecode(result.data.accessToken);
-      const token = result.data.accessToken;
-const decoded: DecodedToken = jwtDecode(token);
+//     if (result.success && result.data) {
+//       // const decoded: DecodedToken = jwtDecode(result.data.accessToken);
+//       const token = result.data.accessToken;
+// const decoded: DecodedToken = jwtDecode(token);
 
-      dispatch(setCredentials({
-        user: {
-          _id: decoded.userId,
-          email: decoded.email,
-          role: decoded.role as 'sender' | 'receiver' | 'admin',
-          name: decoded.email.split("@")[0],
-          status: "active",
-          createdAt: ""
-        },
-         token,
-      }));
+//       dispatch(setCredentials({
+//         user: {
+//           _id: decoded.userId,
+//           email: decoded.email,
+//           role: decoded.role as 'sender' | 'receiver' | 'admin',
+//           name: decoded.email.split("@")[0],
+//           status: "active",
+//           createdAt: ""
+//         },
+//          token,
+//       }));
 
+//       toast({
+//         title: "Login Successful",
+//         description: `Welcome back, ${decoded.email}!`,
+//       });
+
+//       navigate(`/dashboard/${decoded.role}`);
+//     }
+//   // eslint-disable-next-line @typescript-eslint/no-explicit-any
+//   } catch (error: any) {
+//     toast({
+//       title: "Login Failed",
+//       description: error.data?.message || "Invalid credentials. Please try again.",
+//       variant: "destructive",
+//     });
+//   }
+// };
+  
+// pages/auth/Login.tsx
+// const handleSubmit = async (e: React.FormEvent) => {
+//   e.preventDefault();
+
+//   try {
+//     const result = await login(formData).unwrap();
+
+//     if (result.success && result.data) {
+//       const token = result.data.accessToken;
+//       const decoded: DecodedToken = jwtDecode(token);
+//       console.log(decoded, "decoded token");
+//       dispatch(setCredentials({
+//         user: {
+//           _id: decoded.userId,
+//           email: decoded.email,
+//           role: decoded.role as 'sender' | 'receiver' | 'admin',
+//           name: decoded.email.split("@")[0],
+//           status: "active",
+//           createdAt: ""
+//         },
+//         token: token, 
+//       }));
+
+//       // Also store directly (this will use the fixed tokenUtils)
+//       localStorage.setItem('token', token);
+
+//       toast({
+//         title: "Login Successful",
+//         description: `Welcome back, ${decoded.email}!`,
+//       });
+
+//       navigate(`/dashboard/${decoded.role}`);
+//     }
+//   } catch (error: any) {
+//     toast({
+//       title: "Login Failed",
+//       description: error.data?.message || "Invalid credentials. Please try again.",
+//       variant: "destructive",
+//     });
+//   }
+// };
+
+
+const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+
+    try {
+      const result = await login(formData).unwrap()
+
+      if (result.success && result.data) {
+        const token = result.data.accessToken
+        const decoded: DecodedToken = jwtDecode(token)
+
+        dispatch(
+          setCredentials({
+            user: {
+              _id: decoded.userId,
+              email: decoded.email,
+              role: decoded.role as "sender" | "receiver" | "admin",
+              name: decoded.email.split("@")[0],
+              status: "active",
+              createdAt: "",
+            },
+            token, // Pass original token - auth slice will clean it
+          }),
+        )
+
+        toast({
+          title: "Login Successful",
+          description: `Welcome back, ${decoded.email}!`,
+        })
+
+        navigate(`/dashboard/${decoded.role}`)
+      }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
       toast({
-        title: "Login Successful",
-        description: `Welcome back, ${decoded.email}!`,
-      });
-
-      navigate(`/dashboard/${decoded.role}`);
+        title: "Login Failed",
+        description: error.data?.message || "Invalid credentials. Please try again.",
+        variant: "destructive",
+      })
     }
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } catch (error: any) {
-    toast({
-      title: "Login Failed",
-      description: error.data?.message || "Invalid credentials. Please try again.",
-      variant: "destructive",
-    });
   }
-};
-  return (
+return (
     <div className="min-h-screen flex items-center justify-center py-12 px-4">
       <div className="w-full max-w-md">
         {/* Header */}

@@ -1,36 +1,58 @@
+
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import type { RootState } from '../index';
-
 
 export interface User {
   _id: string;
   name: string;
   email: string;
   role: 'sender' | 'receiver' | 'admin';
-  status: 'active' | 'blocked';
+  isActive: "ACTIVE" | "BLOCKED";
   createdAt: string;
 }
 
 export interface Parcel {
   _id: string;
   trackingId: string;
-  senderName: string;
-  senderEmail: string;
-  senderPhone: string;
-  senderAddress: string;
-  receiverName: string;
-  receiverEmail: string;
-  receiverPhone: string;
-  receiverAddress: string;
-  parcelType: string;
+  senderId: {
+    name: string;
+    email: string;
+    _id: string;
+  };
+  receiverId: {
+    name: string;
+    email: string;
+    _id: string;
+  };
+  fee: number;
+  type: string;
   weight: number;
   price: number;
   deliveryDate: string;
-  status: 'pending' | 'in_transit' | 'delivered' | 'cancelled';
+  statusLogs:[
+    {
+      status:'Pending' | 'In Transit' | 'Delivered' | 'Cancelled'| 'Requested' | 'Dispatched' | 'Approved';
+      timestamp: string;
+      location: string;
+      note: string;
+      updatedBy: string;
+    }
+  ];
+  status: 'Pending' | 'In Transit' | 'Delivered' | 'Cancelled'| 'Requested' | 'Dispatched' | 'Approved';
+  isBlocked: boolean;
   statusHistory: StatusLog[];
   createdAt: string;
   updatedAt: string;
 }
+
+
+// interface ParcelsResponse {
+//   data:{parcels: Parcel[]};
+// }
+
+// interface UsersResponse {
+//   data: User[];
+// }
 
 export interface StatusLog {
   status: string;
@@ -41,10 +63,11 @@ export interface StatusLog {
 
 export interface AuthResponse {
   success: boolean;
+  statusCode: number;
   message: string;
   data?: {
-    // user: User;
     accessToken: string;
+    user: User;
   };
 }
 
@@ -60,6 +83,29 @@ export interface RegisterRequest {
   role: 'sender' | 'receiver';
 }
 
+interface ParcelsResponse {
+  success: boolean;
+  statusCode: number;
+  message: string;
+  data: {parcels:Parcel[]};
+  pagination?: {
+    page: number;
+    limit: number;
+    total: number;
+    pages: number;
+  };
+}
+
+interface UsersResponse {
+  success: boolean;
+  statusCode: number;
+  message: string;
+  data: User[];
+  meta?: {
+    total: number;
+  };
+}
+
 export const parcelApi = createApi({
   reducerPath: 'parcelApi',
   baseQuery: fetchBaseQuery({
@@ -67,7 +113,7 @@ export const parcelApi = createApi({
     prepareHeaders: (headers, { getState }) => {
       const token = (getState() as RootState).auth.token;
       if (token) {
-        headers.set('authorization', `Bearer ${token}`);
+        headers.set('Authorization', `${token}`);
       }
       return headers;
     },
@@ -84,15 +130,58 @@ export const parcelApi = createApi({
     }),
     register: builder.mutation<AuthResponse, RegisterRequest>({
       query: (userData) => ({
-        url: '/user/register',
+        url: '/auth/register',
         method: 'POST',
         body: userData,
       }),
     }),
     
-    // Parcel endpoints
-    getAllParcels: builder.query<Parcel[], void>({
-      query: () => '/parcels',
+    // New Parcel endpoints
+    cancelParcel: builder.mutation<{ success: boolean; message: string }, string>({
+      query: (id) => ({
+        url: `/parcels/cancel/${id}`,
+        method: 'PATCH',
+      }),
+      invalidatesTags: ['Parcel'],
+    }),
+    getMyParcels: builder.query<Parcel[], void>({
+      query: () => `/parcels/me`,
+      providesTags: ['Parcel'],
+    }),
+    getIncomingParcels: builder.query<Parcel[], void>({
+      query: () => `/parcels/incoming`,
+      providesTags: ['Parcel'],
+    }),
+    confirmDelivery: builder.mutation<{ success: boolean; message: string }, string>({
+      query: (id) => ({
+        url: `/parcels/confirm-delivery/${id}`,
+        method: 'PATCH',
+      }),
+      invalidatesTags: ['Parcel'],
+    }),
+    getParcelStatus: builder.query<{ status: string }, string>({
+      query: (id) => `/parcels/status/${id}`,
+      providesTags: ['Parcel'],
+    }),
+    getDeliveryHistory: builder.query<Parcel[], void>({
+      query: () => `/parcels/delivery-history`,
+      providesTags: ['Parcel'],
+    }),
+    toggleBlockParcel: builder.mutation<{ success: boolean; message: string }, string>({
+      query: (id) => ({
+        url: `/parcels/toggle-block/${id}`,
+        method: 'PATCH',
+      }),
+      invalidatesTags: ['Parcel'],
+    }),
+    getParcelStatusLogs: builder.query<StatusLog[], string>({
+      query: (id) => `/parcels/${id}/status-logs`,
+      providesTags: ['Parcel'],
+    }),
+    
+    // Existing Parcel endpoints
+    getAllParcels: builder.query<ParcelsResponse, void>({
+      query: () => '/parcels/all',
       providesTags: ['Parcel'],
     }),
     getParcelByTrackingId: builder.query<Parcel, string>({
@@ -109,9 +198,9 @@ export const parcelApi = createApi({
     }),
     updateParcelStatus: builder.mutation<Parcel, { id: string; status: string; note?: string }>({
       query: ({ id, ...patch }) => ({
-        url: `/parcels/${id}/status`,
+        url: `/parcels/status/${id}`,
         method: 'PATCH',
-        body: patch,
+        body: patch
       }),
       invalidatesTags: ['Parcel'],
     }),
@@ -124,29 +213,44 @@ export const parcelApi = createApi({
     }),
     
     // User endpoints
-    getAllUsers: builder.query<User[], void>({
-      query: () => '/users',
+    getAllUsers: builder.query<UsersResponse, void>({
+      query: () => '/user/users',
       providesTags: ['User'],
     }),
-    updateUserStatus: builder.mutation<User, { id: string; status: 'active' | 'blocked' }>({
-      query: ({ id, status }) => ({
-        url: `/users/${id}/status`,
-        method: 'PATCH',
-        body: { status },
-      }),
-      invalidatesTags: ['User'],
-    }),
+    blockUser: builder.mutation<User, string>({
+  query: (id) => ({
+    url: `/user/block/${id}`, // backend এ এই রুটটা ব্যবহার করুন
+    method: 'PATCH',
+  }),
+  invalidatesTags: ['User'],
+}),
+unblockUser: builder.mutation<User, string>({
+  query: (id) => ({
+    url: `/user/unblock/${id}`,
+    method: 'PATCH',
+  }),
+  invalidatesTags: ['User'],
+}),
   }),
 });
 
 export const {
   useLoginMutation,
   useRegisterMutation,
+  useCancelParcelMutation,
+  useGetMyParcelsQuery,
+  useGetIncomingParcelsQuery,
+  useConfirmDeliveryMutation,
+  useGetParcelStatusQuery,
+  useGetDeliveryHistoryQuery,
+  useToggleBlockParcelMutation,
+  useGetParcelStatusLogsQuery,
   useGetAllParcelsQuery,
   useGetParcelByTrackingIdQuery,
   useCreateParcelMutation,
   useUpdateParcelStatusMutation,
   useDeleteParcelMutation,
   useGetAllUsersQuery,
-  useUpdateUserStatusMutation,
+  useBlockUserMutation,
+  useUnblockUserMutation,
 } = parcelApi;
