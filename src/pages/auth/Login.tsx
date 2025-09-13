@@ -137,7 +137,7 @@ const handleSubmit = async (e: React.FormEvent) => {
               email: decoded.email,
               role: decoded.role as "sender" | "receiver" | "admin",
               name: decoded.email.split("@")[0],
-              status: "active",
+              isActive: "ACTIVE",
               createdAt: "",
             },
             token, // Pass original token - auth slice will clean it
@@ -243,7 +243,7 @@ return (
         </Card>
 
         {/* Demo Credentials */}
-        <Card className="mt-6 bg-muted/50">
+        {/* <Card className="mt-6 bg-muted/50">
           <CardContent className="p-4">
             <h3 className="text-sm font-semibold text-muted-foreground mb-2">Demo Credentials:</h3>
             <div className="text-xs text-muted-foreground space-y-1">
@@ -252,7 +252,7 @@ return (
               <p><strong>Admin:</strong> admin@demo.com / password123</p>
             </div>
           </CardContent>
-        </Card>
+        </Card> */}
       </div>
     </div>
   );
