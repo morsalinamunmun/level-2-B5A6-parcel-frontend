@@ -46,8 +46,8 @@ export interface Parcel {
 }
 
 
-// interface ParcelsResponse {
-//   data:{parcels: Parcel[]};
+// interface MyParcelsResponse {
+//   data:Parcel[];
 // }
 
 // interface UsersResponse {
@@ -87,7 +87,7 @@ interface ParcelsResponse {
   success: boolean;
   statusCode: number;
   message: string;
-  data: {parcels:Parcel[]};
+  data: {parcels:Parcel[];};
   pagination?: {
     page: number;
     limit: number;
@@ -144,11 +144,11 @@ export const parcelApi = createApi({
       }),
       invalidatesTags: ['Parcel'],
     }),
-    getMyParcels: builder.query<Parcel[], void>({
+    getMyParcels: builder.query<{data:Parcel[]}, void>({
       query: () => `/parcels/me`,
       providesTags: ['Parcel'],
     }),
-    getIncomingParcels: builder.query<Parcel[], void>({
+    getIncomingParcels: builder.query<{data:Parcel[]}, void>({
       query: () => `/parcels/incoming`,
       providesTags: ['Parcel'],
     }),

@@ -324,6 +324,7 @@ import {
 } from "@/components/ui/select";
 
 interface CreateParcelFormProps {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onSubmit: (parcelData: any) => Promise<void>;
   receiverOptions: Array<{ _id: string; name: string; email: string }>;
 }
