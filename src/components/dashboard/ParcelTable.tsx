@@ -5,10 +5,10 @@ import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { useUpdateParcelStatusMutation, useDeleteParcelMutation, useToggleBlockParcelMutation } from "@/store/api/parcelApi"
+import { useUpdateParcelStatusMutation, useToggleBlockParcelMutation, useCancelParcelMutation } from "@/store/api/parcelApi"
 import { useToast } from "@/hooks/use-toast"
 import type { Parcel } from "@/store/api/parcelApi"
-import { Switch } from "../ui/switch"
+// import { Switch } from "../ui/switch"
 
 interface ParcelTableProps {
   parcels: Parcel[]
@@ -19,27 +19,27 @@ interface ParcelTableProps {
 const ParcelTable = ({ parcels, userRole, showActions }: ParcelTableProps) => {
   const { toast } = useToast()
   const [updateParcelStatus] = useUpdateParcelStatusMutation()
-  const [deleteParcel] = useDeleteParcelMutation()
+  const [cancelParcel] = useCancelParcelMutation()
   const [selectedParcel, setSelectedParcel] = useState<Parcel | null>(null)
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false)
-  const [toggleBlockParcel, {isLoading}] = useToggleBlockParcelMutation()
+  const [toggleBlockParcel, { isLoading }] = useToggleBlockParcelMutation()
 
   // handle toggle block
-//  const handleToggle = async () => {
-//     try {
-//       await toggleBlockParcel(parcel._id).unwrap()
-//       toast({
-//         title: parcel.isBlocked ? "Parcel Unblocked" : "Parcel Blocked",
-//         description: `This parcel is now ${parcel.isBlocked ? "active" : "blocked"}.`,
-//       })
-//     } catch (err) {
-//       toast({
-//         title: "Error",
-//         description: "Failed to toggle block status.",
-//         variant: "destructive",
-//       })
-//     }
-//   }
+  //  const handleToggle = async () => {
+  //     try {
+  //       await toggleBlockParcel(parcel._id).unwrap()
+  //       toast({
+  //         title: parcel.isBlocked ? "Parcel Unblocked" : "Parcel Blocked",
+  //         description: `This parcel is now ${parcel.isBlocked ? "active" : "blocked"}.`,
+  //       })
+  //     } catch (err) {
+  //       toast({
+  //         title: "Error",
+  //         description: "Failed to toggle block status.",
+  //         variant: "destructive",
+  //       })
+  //     }
+  //   }
   const getStatusBadgeVariant = (status: string) => {
     switch (status.toLowerCase()) {
       case "requested":
@@ -99,17 +99,18 @@ const ParcelTable = ({ parcels, userRole, showActions }: ParcelTableProps) => {
     }
   }
 
-  const handleDelete = async (parcelId: string) => {
+  // Assuming you have cancelParcel from your RTK query hooks
+  const handleCancel = async (parcelId: string) => {
     try {
-      await deleteParcel(parcelId).unwrap()
+      await cancelParcel(parcelId).unwrap()  // call cancel instead of delete
       toast({
-        title: "Parcel Deleted",
-        description: "The parcel has been successfully deleted.",
+        title: "Parcel Cancelled",
+        description: "The parcel has been successfully cancelled.",
       })
     } catch (error) {
       toast({
-        title: "Delete Failed",
-        description: "Failed to delete parcel. Please try again.",
+        title: "Cancel Failed",
+        description: "Failed to cancel parcel. Please try again.",
         variant: "destructive",
       })
     }
@@ -264,7 +265,10 @@ const ParcelTable = ({ parcels, userRole, showActions }: ParcelTableProps) => {
                           </>
                         )}
                         {userRole === "sender" && ["Requested", "Approved"].includes(parcel.status) && (
-                          <DropdownMenuItem onClick={() => handleDelete(parcel._id)} className="text-destructive">
+                          <DropdownMenuItem
+                            onClick={() => handleCancel(parcel._id)}  // call the new cancel handler
+                            className="text-destructive"
+                          >
                             <XCircle className="w-4 h-4 mr-2" />
                             Cancel Parcel
                           </DropdownMenuItem>
